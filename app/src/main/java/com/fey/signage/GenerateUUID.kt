@@ -1,12 +1,14 @@
 package com.fey.signage
 
+import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 
 object GenerateUUID {
 
+    var uuid = MutableLiveData<String>("")
 
-    fun generateSevenDigitAlphanumericUUID(): String {
+    fun generateSevenDigitAlphanumericUUID(): MutableLiveData<String> {
 
         val random = Random()
         val alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -30,9 +32,11 @@ object GenerateUUID {
             uuidBuilder.append(randomCharOrNumber)
         }
 
-        return uuidBuilder.toString()
+        return MutableLiveData<String>("k305nva")
     }
 
-
+fun assignmentUUID() {
+    uuid = generateSevenDigitAlphanumericUUID()
+}
 
 }

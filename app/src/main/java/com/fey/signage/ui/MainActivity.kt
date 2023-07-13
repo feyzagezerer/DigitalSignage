@@ -7,7 +7,9 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.MutableLiveData
 import com.fey.signage.GenerateUUID
+import com.fey.signage.GenerateUUID.uuid
 import com.fey.signage.R
 import com.fey.signage.api.VideoPlayerRepository
 import com.fey.signage.databinding.ActivityMainBinding
@@ -31,12 +33,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        var uuid = GenerateUUID.generateSevenDigitAlphanumericUUID()
-        Timber.tag("Check Uuid").e("UUID $uuid")
-        sharedPreferences = this.getSharedPreferences("STATE", Context.MODE_PRIVATE)!!
+       // var uuid = GenerateUUID.generateSevenDigitAlphanumericUUID()
+        GenerateUUID.assignmentUUID()
+        Timber.tag("Check Uuid").e("UUID ${uuid.value}")
+       /* sharedPreferences = this.getSharedPreferences("STATE", Context.MODE_PRIVATE)!!
         val editor = sharedPreferences.edit()
-        editor.putString("uuid",uuid)
-        editor.commit()
+        editor.putString("uuid", uuid.toString())
+        editor.commit()*/
 
         binding = DataBindingUtil.setContentView<ActivityMainBinding?>(this, R.layout.activity_main)
             .apply {
@@ -50,7 +53,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Suppress("DEPRECATION")
-    private fun setupViews(uuid: String) {
+    private fun setupViews(uuid: MutableLiveData<String>) {
         supportActionBar?.hide()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
