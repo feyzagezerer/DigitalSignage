@@ -20,70 +20,57 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: VideoPlayerRepository
-): ViewModel() {
+) : ViewModel() {
 
-    private lateinit var uuid: String
-    private val _command = MutableLiveData<Long>()
-    val command: LiveData<Long> get() = _command
+    private var uuid: String? = null
+    private val _command = MutableLiveData<Long?>()
+    val command: LiveData<Long?> get() = _command
+    private var paramsList: List<Params>? = null
 
-    private val _commandSync = MutableLiveData<Long?>()
-    val commandSync: LiveData<Long?> get() = _commandSync
-    private var paramsList: List<Params>?  = null
-
-    fun setup(uuid: MutableLiveData<String>){
-        this.uuid = uuid.toString()
-        Timber.tag("Check Uuid").e("UUID ${GenerateUUID.uuid.value}")
-        forReportCommand()
+    fun setup(uuid: MutableLiveData<String>) {
+        this.uuid = uuid.value
+        Timber.tag("Check UUID").e("UUID ${uuid.value}")
         loadScreenAndCheckStatus()
-        forSyncCommand()
-        }
+    }
 
 
-    private fun forReportCommand(){
+    private fun forReportCommand() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = repository.loadScreen(uuid)
-            if(result.body() != null){
+            if (result.body() != null) {
                 val screenResponse = result.body()
                 paramsList = screenResponse?.params
-                paramsList?.forEach{params ->
-                    _command.value = params.report?.commandID
-                }
-            }
-        }
-    }
-    private fun forSyncCommand() {
-        try {
-            viewModelScope.launch(Dispatchers.IO) {
-                val result = repository.loadScreen(uuid)
-                if (result.body() != null) {
-                    val screenResponse = result.body()
-                    paramsList = screenResponse?.params
-                    paramsList?.forEach { params ->
-                        _commandSync.value = params.sync?.commandIDSync
+                paramsList?.forEach { params ->
+                    if (params.sync?.commandIDSync == null) {
+                        _command.postValue(params.report?.commandID)
+                    } else {
+                        _command.postValue(params.sync.commandIDSync)
                     }
                 }
+                Timber.tag("Check CommandID").e("command id : %s", _command.value)
             }
-        } catch (exception: Exception) {
-
+            checkStatus(_command.value.toString())
         }
     }
-private fun loadScreenAndCheckStatus() {
-    viewModelScope.launch(Dispatchers.IO) {
-        val command = forReportCommand()
-        checkStatus(command.toString())
-        val commandSync = forSyncCommand()
-        checkStatus(commandSync.toString())
-    }
-}
 
-    private fun checkStatus(commandID: String){
+    private fun loadScreenAndCheckStatus() {
+        forReportCommand()
+
+
+    }
+
+    private fun checkStatus(commandID: String) {
+
         viewModelScope.launch(Dispatchers.IO) {
+            Timber.tag("Check commandID").e("commandID : %s", commandID)
             val mediaType = "application/json".toMediaType()
-            val requestBody = Gson().toJson(CommandStatusRequest(commandID)).toRequestBody(mediaType)
+            val requestBody =
+                Gson().toJson(CommandStatusRequest(commandID)).toRequestBody(mediaType)
             val result = repository.checkStatus(uuid, requestBody)
-            if(result.body() != null){
+            if (result.body() != null) {
                 val checkStatusResponse = result.body()
-                Timber.tag("Check Command Status").e("Status : %s", checkStatusResponse?.message?.status)
+                Timber.tag("Check Command Status")
+                    .e("Status : %s", checkStatusResponse?.message?.status)
             }
         }
     }

@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.fey.signage.GenerateUUID
 import com.fey.signage.GenerateUUID.uuid
 import com.fey.signage.R
@@ -63,6 +64,11 @@ class MainActivity : AppCompatActivity() {
         viewModel.setup(uuid)
     }
     fun setVideoUrl(uuid: String) {
+   /*     viewModel.command.observe(this, Observer { response ->
+            Timber.tag("Check commandID").e("commandID : %s", response)
+
+        })*/
+
         val videoUrl = BASE_URL + "screen/" + uuid
         val mediaItem = MediaItem.fromUri(videoUrl)
         exoPlayer.setMediaItem(mediaItem)
