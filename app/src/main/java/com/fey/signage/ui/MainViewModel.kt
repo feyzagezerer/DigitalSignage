@@ -11,6 +11,7 @@ import com.fey.signage.model.request.CommandStatusRequest
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -36,20 +37,25 @@ class MainViewModel @Inject constructor(
 
     private fun forReportCommand() {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.loadScreen(uuid)
-            if (result.body() != null) {
-                val screenResponse = result.body()
-                paramsList = screenResponse?.params
-                paramsList?.forEach { params ->
-                    if (params.sync?.commandIDSync == null) {
-                        _command.postValue(params.report?.commandID)
-                    } else {
-                        _command.postValue(params.sync.commandIDSync)
+            while (true) {
+                val result = repository.loadScreen(uuid)
+                if (result.body() != null) {
+                    val screenResponse = result.body()
+                    paramsList = screenResponse?.params
+                    paramsList?.forEach { params ->
+                        if (params.sync?.commandIDSync == null) {
+                            _command.postValue(params.report?.commandID)
+                            checkStatus(_command.value.toString())
+                        } else {
+                            _command.postValue(params.sync.commandIDSync)
+                            checkStatus(_command.value.toString())
+                        }
                     }
+                    Timber.tag("Check CommandID").e("command id : %s", _command.value)
                 }
-                Timber.tag("Check CommandID").e("command id : %s", _command.value)
+
+                delay(10000)
             }
-            checkStatus(_command.value.toString())
         }
     }
 
