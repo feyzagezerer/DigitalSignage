@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fey.signage.GenerateUUID
 import com.fey.signage.api.VideoPlayerRepository
+import com.fey.signage.model.Data
 import com.fey.signage.model.Params
 import com.fey.signage.model.request.CommandStatusRequest
 import com.google.gson.Gson
@@ -27,6 +28,11 @@ class MainViewModel @Inject constructor(
     private val _command = MutableLiveData<Long?>()
     val command: LiveData<Long?> get() = _command
     private var paramsList: List<Params>? = null
+    private val _data = MutableLiveData<List<Data>?>()
+    val data: LiveData<List<Data>?> get() = _data
+     val _namesList = MutableLiveData<List<String>?>()
+    val namesList: LiveData<List<String>?> get() = _namesList
+
 
     fun setup(uuid: MutableLiveData<String>) {
         this.uuid = uuid.value
@@ -48,7 +54,10 @@ class MainViewModel @Inject constructor(
                             checkStatus(_command.value.toString())
                         } else {
                             _command.postValue(params.sync.commandIDSync)
+                           _data.postValue(params.sync.data)
+
                             checkStatus(_command.value.toString())
+                            processNames(params.sync.data)
                         }
                     }
                     Timber.tag("Check CommandID").e("command id : %s", _command.value)
@@ -57,7 +66,14 @@ class MainViewModel @Inject constructor(
                 delay(10000)
             }
         }
+
     }
+    private fun processNames(dataList: List<Data>?) {
+        val namesListList = dataList?.map { it.name }
+        _namesList.postValue(namesListList)
+        Timber.tag("Check namelist").e("name list : %s", namesListList)
+    }
+
 
     private fun loadScreenAndCheckStatus() {
         forReportCommand()

@@ -1,7 +1,6 @@
 package com.fey.signage.ui
 
-import android.content.Context
-import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.viewModels
@@ -9,17 +8,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.SimpleExoPlayer
 import com.fey.signage.GenerateUUID
 import com.fey.signage.GenerateUUID.uuid
 import com.fey.signage.R
-import com.fey.signage.api.VideoPlayerRepository
 import com.fey.signage.databinding.ActivityMainBinding
-import com.fey.signage.utils.Constants.BASE_URL
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -27,92 +24,84 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var exoPlayer: ExoPlayer
+    private var player: ExoPlayer? = null
 
-    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-       // var uuid = GenerateUUID.generateSevenDigitAlphanumericUUID()
+        val uuid = GenerateUUID.generateSevenDigitAlphanumericUUID()
         GenerateUUID.assignmentUUID()
         Timber.tag("Check Uuid").e("UUID ${uuid.value}")
-       /* sharedPreferences = this.getSharedPreferences("STATE", Context.MODE_PRIVATE)!!
-        val editor = sharedPreferences.edit()
-        editor.putString("uuid", uuid.toString())
-        editor.commit()*/
-
         binding = DataBindingUtil.setContentView<ActivityMainBinding?>(this, R.layout.activity_main)
             .apply {
                 lifecycleOwner = this@MainActivity
                 viewModel = this@MainActivity.viewModel
             }
 
-
-        setupViews(uuid)
-
+        initializePlayer()
+    viewModel.setup(uuid)
     }
 
-    @Suppress("DEPRECATION")
-    private fun setupViews(uuid: MutableLiveData<String>) {
+
+    private fun initializePlayer() {
         supportActionBar?.hide()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        player = ExoPlayer.Builder(this).build()
+        binding.playerView.player = player
+        Timber.tag("Check namelist").e("name list mainac : %s", viewModel.namesList)
+        viewModel.namesList.observe(this, Observer { names ->
+            names?.forEach { name ->
+                val imageUrl = "https://octopus-panel-case.azurewebsites.net/uploads/" + name
+                Timber.tag("Check namelist").e("name list mainac name : %s", name)
+                Timber.tag("Check namelist").e("imageUrl : %s", imageUrl)
+               val cmd = "ffmpeg -loop 1 -t 3 -i " + name[0] + " -loop 1 -t 3 -i " +  name[0] + " -loop 1 -t 3 -i " +  name[0] + " -loop 1 -t 3 -i " +  name[0] + " -filter_complex [0:v]trim=duration=3,fade=t=out:st=2.5:d=0.5[v0];[1:v]trim=duration=3,fade=t=in:st=0:d=0.5,fade=t=out:st=2.5:d=0.5[v1];[2:v]trim=duration=3,fade=t=in:st=0:d=0.5,fade=t=out:st=2.5:d=0.5[v2];[3:v]trim=duration=3,fade=t=in:st=0:d=0.5,fade=t=out:st=2.5:d=0.5[v3];[v0][v1][v2][v3]concat=n=4:v=1:a=0,format=yuv420p[v] -map [v] -preset ultrafast "
+                val cmdm = cmd +"/Users/ambeentmacbookpro/Signage/output.mp4"
+                val process = Runtime.getRuntime().exec(cmdm)
+                process.waitFor()
+                val videoUri = Uri.parse("/Users/ambeentmacbookpro/Signage/output.mp4")
+                val madiaItem = MediaItem.fromUri(videoUri)
+                player?.addMediaItem(madiaItem)
+                player?.prepare()
+            }})
+}
 
-        exoPlayer = ExoPlayer.Builder(this).build()
-        binding.styledPlayerView.player = exoPlayer
 
-        viewModel.setup(uuid)
-    }
-    fun setVideoUrl(uuid: String) {
-   /*     viewModel.command.observe(this, Observer { response ->
-            Timber.tag("Check commandID").e("commandID : %s", response)
+private fun stopPlayer() {
+  player?.pause()
 
-        })*/
+}
 
-        val videoUrl = BASE_URL + "screen/" + uuid
-        val mediaItem = MediaItem.fromUri(videoUrl)
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
-        startPlayer()
-    }
+private fun releasePlayer() {
+  player?.release()
+  player = null
+}
+override fun onStart(){
+super.onStart()
+initializePlayer()
 
+}
+override fun onResume() {
+  super.onResume()
+  if(player==null) {
+      initializePlayer()
+  }
+}
 
-    private fun startPlayer() {
+override fun onPause() {
+  super.onPause()
+  releasePlayer()
+}
 
-        exoPlayer.playWhenReady = true
-        exoPlayer.play()
-    }
+override fun onStop() {
+  super.onStop()
+  releasePlayer()
+}
 
-    private fun stopPlayer() {
-        exoPlayer.pause()
-        exoPlayer.playWhenReady = false
-    }
+override fun onDestroy() {
+  super.onDestroy()
+  window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+//  releasePlayer()
 
-    private fun releasePlayer() {
-        exoPlayer.stop()
-        exoPlayer.release()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        setVideoUrl("q4j3x1c")
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-        stopPlayer()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        stopPlayer()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        releasePlayer()
-
-    }
+}
 }
