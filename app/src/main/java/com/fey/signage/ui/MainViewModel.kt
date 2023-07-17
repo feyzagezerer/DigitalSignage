@@ -34,9 +34,9 @@ class MainViewModel @Inject constructor(
     val namesList: LiveData<List<String>?> get() = _namesList
 
 
-    fun setup(uuid: MutableLiveData<String>) {
-        this.uuid = uuid.value
-        Timber.tag("Check UUID").e("UUID ${uuid.value}")
+    fun setup(uuid: String?) {
+        this.uuid = uuid
+        Timber.tag("Check UUID").e("UUID ${uuid}")
         loadScreenAndCheckStatus()
     }
 
@@ -84,8 +84,7 @@ class MainViewModel @Inject constructor(
     private fun checkStatus(commandID: String) {
 
         viewModelScope.launch(Dispatchers.IO) {
-            Timber.tag("Check commandID").e("commandID : %s", commandID)
-            val mediaType = "application/json".toMediaType()
+              val mediaType = "application/json".toMediaType()
             val requestBody =
                 Gson().toJson(CommandStatusRequest(commandID)).toRequestBody(mediaType)
             val result = repository.checkStatus(uuid, requestBody)

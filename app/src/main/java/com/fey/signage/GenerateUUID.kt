@@ -32,7 +32,7 @@ object GenerateUUID {
             uuidBuilder.append(randomCharOrNumber)
         }
 
-        return MutableLiveData<String>("k305nva")
+        return MutableLiveData<String>(uuidBuilder.toString())
     }
 
 fun assignmentUUID() {

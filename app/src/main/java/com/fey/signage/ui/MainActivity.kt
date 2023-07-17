@@ -10,9 +10,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.SimpleExoPlayer
-import com.fey.signage.GenerateUUID
-import com.fey.signage.GenerateUUID.uuid
 import com.fey.signage.R
 import com.fey.signage.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,9 +27,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val uuid = GenerateUUID.generateSevenDigitAlphanumericUUID()
-        GenerateUUID.assignmentUUID()
-        Timber.tag("Check Uuid").e("UUID ${uuid.value}")
+
         binding = DataBindingUtil.setContentView<ActivityMainBinding?>(this, R.layout.activity_main)
             .apply {
                 lifecycleOwner = this@MainActivity
@@ -40,7 +35,8 @@ class MainActivity : AppCompatActivity() {
             }
 
         initializePlayer()
-    viewModel.setup(uuid)
+        val uuidd = intent.getStringExtra("uuid")
+    viewModel.setup(uuidd)
     }
 
 

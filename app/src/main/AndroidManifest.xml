@@ -22,6 +22,14 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ui.StandbyActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".ui.SplashActivity"
             android:exported="true">
             <intent-filter>
