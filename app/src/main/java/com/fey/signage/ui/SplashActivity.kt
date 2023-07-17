@@ -1,10 +1,8 @@
 package com.fey.signage.ui
 
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.fey.signage.GenerateUUID
 import com.fey.signage.R
 import com.fey.signage.databinding.ActivitySplashBinding
 import dagger.hilt.android.AndroidEntryPoint

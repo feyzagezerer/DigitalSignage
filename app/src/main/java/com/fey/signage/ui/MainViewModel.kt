@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fey.signage.GenerateUUID
 import com.fey.signage.api.VideoPlayerRepository
 import com.fey.signage.model.Data
 import com.fey.signage.model.Params
